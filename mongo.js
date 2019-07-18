@@ -6,6 +6,7 @@ const db_user = 'leo';
 const len = process.argv.length;
 if (!(len === 3 || len === 5)) {
   console.log('Invalid arguments');
+  process.exit(1);
 }
 
 const password = process.argv[2];
