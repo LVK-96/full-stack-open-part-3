@@ -18,20 +18,8 @@ morgan.token('body', (req, res) => {
 });
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'));
 
-const errorHandler = (error, request, response, next) => {
-  console.error(error.message);
-  if (error.name === 'CastError' && error.kind == 'ObjectId') {
-    return response.status(400).send({ error: 'malformed id' });
-  }
-
-  next(error);
-}
-
-app.use(errorHandler);
-
 app.delete('/api/persons/:id', (request, response, next) => {
   const id = String(request.params.id);
-  console.log(id)
   Person.findByIdAndRemove(id)
     .then(result => {
       response.status(204).end();
@@ -65,7 +53,6 @@ app.post('/api/persons', (request, response, next) => {
 
 app.put('/api/persons/:id', (request, response, next) => {
   const body = request.body;
-  console.log("asd");
   if (!body.name) {
     return response.status(400).json({
       error: 'name missing'
@@ -80,7 +67,6 @@ app.put('/api/persons/:id', (request, response, next) => {
     name: body.name,
     number: body.number,
   };
-  console.log("asd");
   Person.findByIdAndUpdate(request.params.id, person, { new: true })
     .then(updatedPerson => {
       response.json(updatedPerson.toJSON());
@@ -132,6 +118,18 @@ const unknownEndpoint = (request, response) => {
 }
 
 app.use(unknownEndpoint);
+
+const errorHandler = (error, request, response, next) => {
+  if (error.name === 'CastError' && error.kind == 'ObjectId') {
+    return response.status(400).send({ error: 'malformed id' });
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).send({ error: error.message });
+  }
+
+  next(error);
+}
+
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
